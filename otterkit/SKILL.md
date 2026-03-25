@@ -60,13 +60,13 @@ Runs in the background as a detached process. Auto-expires when TTL runs out.
 
 #### Daemon Pricing
 
-| TTL | Price | Flag |
-|-----|-------|------|
-| 1 minute | $0.01 | `--ttl 1m` |
-| 1 hour (default) | $0.01 | `--ttl 1h` |
-| 4 hours | $0.03 | `--ttl 4h` |
-| 12 hours | $0.05 | `--ttl 12h` |
-| 24 hours | $0.08 | `--ttl 24h` |
+| TTL              | Price | Flag        |
+| ---------------- | ----- | ----------- |
+| 1 minute         | $0.01 | `--ttl 1m`  |
+| 1 hour (default) | $0.01 | `--ttl 1h`  |
+| 4 hours          | $0.03 | `--ttl 4h`  |
+| 12 hours         | $0.05 | `--ttl 12h` |
+| 24 hours         | $0.08 | `--ttl 24h` |
 
 ### Webhook Endpoint ($0.01, captures incoming HTTP requests)
 
@@ -98,13 +98,13 @@ Stops a running daemon tunnel by its subdomain (e.g., `agent-a1b2c3d4`).
 
 ## Options
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--host <host>` | Local host to forward to | `127.0.0.1` |
-| `--account <name>` | mppx account name to use for payment | default account |
-| `--wallet <name>` | Force wallet: `tempo` or `mppx` (overrides auto-detect) | auto-detect |
-| `--daemon` | Run tunnel in background | off |
-| `--ttl <duration>` | Daemon TTL: 1m, 1h, 4h, 12h, 24h | `1h` |
+| Flag               | Description                                             | Default         |
+| ------------------ | ------------------------------------------------------- | --------------- |
+| `--host <host>`    | Local host to forward to                                | `127.0.0.1`     |
+| `--account <name>` | mppx account name to use for payment                    | default account |
+| `--wallet <name>`  | Force wallet: `tempo` or `mppx` (overrides auto-detect) | auto-detect     |
+| `--daemon`         | Run tunnel in background                                | off             |
+| `--ttl <duration>` | Daemon TTL: 1m, 1h, 4h, 12h, 24h                        | `1h`            |
 
 ## Examples
 
@@ -153,22 +153,27 @@ npx otterkit stop agent-a1b2c3d4
 If the command fails with "No wallet found", set up one of the supported wallets:
 
 **Option 1: Tempo Wallet (recommended)**
+
 ```bash
 curl -fsSL https://tempo.xyz/install | bash && tempo wallet login
 ```
 
 **Option 2: mppx**
+
 ```bash
 npx mppx account create
 npx mppx account fund
 ```
 
 If the user has multiple accounts and wants to list them:
+
 ```bash
 npx mppx account list
 ```
 
 To check pricing:
+
 ```bash
 curl https://otterkit.app/api/agent/pricing
 ```
+
