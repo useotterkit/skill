@@ -42,6 +42,8 @@ If the server asks for USDC but the mppx wallet holds pathUSD, the CLI auto-swap
 - User needs to debug webhook integrations (capture + forward)
 - User wants to capture HTTP traffic passing through a tunnel for later inspection
 - User needs to replay or inspect webhook payloads
+- User wants to share a local file via a download URL
+- User needs to generate a downloadable link for a file
 
 ## Commands
 
@@ -106,6 +108,18 @@ npx otterkit inspect <subdomain>         # view captured requests (last 20)
 npx otterkit inspect <subdomain> --json  # raw JSONL output for piping
 npx otterkit inspect <subdomain> --last 50  # show last 50 requests
 ```
+
+### Share Files ($0.01, generates download URLs)
+
+```bash
+npx otterkit share <paths...>
+npx otterkit share ./report.pdf
+npx otterkit share ./file1.pdf ./file2.zip
+npx otterkit share ./dist/
+npx otterkit share ./dist/ --daemon --ttl 4h
+```
+
+Creates public download URLs for local files or directories. Supports single files, multiple files, and entire directories. Multiple files get an index page listing all downloads. Supports daemon mode for background sharing.
 
 ### Check Running Daemons
 
@@ -174,6 +188,18 @@ npx otterkit inspect agent-a1b2c3d4
 
 # View as raw JSONL (pipe-friendly)
 npx otterkit inspect agent-a1b2c3d4 --json
+
+# Share a single file ($0.01)
+npx otterkit share ./report.pdf
+
+# Share multiple files (one URL with index page)
+npx otterkit share ./file1.pdf ./file2.zip
+
+# Share an entire directory
+npx otterkit share ./dist/
+
+# Share in background for 4 hours
+npx otterkit share ./dist/ --daemon --ttl 4h
 
 # Check running daemons
 npx otterkit status
