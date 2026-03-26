@@ -92,7 +92,7 @@ npx otterkit intercept <port>    # capture + forward to local port
 npx otterkit intercept           # capture only, no local server
 ```
 
-Captures every HTTP request to a local JSONL file (`~/.otterkit/requests/<subdomain>.jsonl`) while optionally forwarding to your local server. Useful for debugging webhook integrations — inspect or replay any captured request later.
+Captures every HTTP request to a local JSONL file (`~/.otterkit/requests/<subdomain>.jsonl`) while optionally forwarding to your local server. Useful for debugging webhook integrations. Inspect or replay any captured request later.
 
 Supports daemon mode:
 
