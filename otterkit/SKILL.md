@@ -39,6 +39,9 @@ If the server asks for USDC but the mppx wallet holds pathUSD, the CLI auto-swap
 - User needs a webhook endpoint to capture incoming HTTP requests
 - User wants to test webhooks without running a local server
 - User needs to receive webhook callbacks from third-party services (Stripe, GitHub, Slack, etc.)
+- User needs to debug webhook integrations (capture + forward)
+- User wants to capture HTTP traffic passing through a tunnel for later inspection
+- User needs to replay or inspect webhook payloads
 
 ## Commands
 
@@ -78,6 +81,30 @@ Creates a webhook endpoint that captures incoming HTTP requests without needing 
 
 ```bash
 npx otterkit webhook --daemon [--ttl <duration>]
+```
+
+### Intercept (capture + forward, $0.01)
+
+```bash
+npx otterkit intercept <port>    # capture + forward to local port
+npx otterkit intercept           # capture only, no local server
+```
+
+Captures every HTTP request to a local JSONL file (`~/.otterkit/requests/<subdomain>.jsonl`) while optionally forwarding to your local server. Useful for debugging webhook integrations — inspect or replay any captured request later.
+
+Supports daemon mode:
+
+```bash
+npx otterkit intercept <port> --daemon --ttl 4h
+npx otterkit intercept --daemon --ttl 1h
+```
+
+### Inspect Captured Requests
+
+```bash
+npx otterkit inspect <subdomain>         # view captured requests (last 20)
+npx otterkit inspect <subdomain> --json  # raw JSONL output for piping
+npx otterkit inspect <subdomain> --last 50  # show last 50 requests
 ```
 
 ### Check Running Daemons
@@ -133,6 +160,21 @@ npx otterkit webhook --daemon --ttl 4h
 # Webhook with a specific mppx account
 npx otterkit webhook --account work
 
+# Intercept: capture + forward to local server ($0.01)
+npx otterkit intercept 3000
+
+# Intercept: capture only, no local server ($0.01)
+npx otterkit intercept
+
+# Intercept daemon for 4 hours
+npx otterkit intercept 3000 --daemon --ttl 4h
+
+# View captured requests
+npx otterkit inspect agent-a1b2c3d4
+
+# View as raw JSONL (pipe-friendly)
+npx otterkit inspect agent-a1b2c3d4 --json
+
 # Check running daemons
 npx otterkit status
 
@@ -176,4 +218,3 @@ To check pricing:
 ```bash
 curl https://otterkit.app/api/agent/pricing
 ```
-
