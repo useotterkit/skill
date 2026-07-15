@@ -68,6 +68,31 @@ Runs in the background as a detached process. Same hourly pricing; the TTL is an
 | While disconnected   | Free — billing pauses                           |
 | Auto-stop TTL        | `--ttl 45m` / `4h` / `3d` (default 24h, max 7d) |
 
+### Stable URL (`--subdomain`)
+
+By default every tunnel/webhook gets a fresh random URL (`https://agent-<hex>.otterkit.app`).
+To get a **persistent URL that stays the same across runs**, pass `--subdomain <name>`:
+
+```bash
+npx otterkit tunnel 3000 --subdomain myapp   # https://myapp.otterkit.app, every time
+```
+
+The name is claimed to the user's account the first time it's used and reused after that, so
+the same public URL works across restarts and machines. Use this when the user needs a fixed
+URL to hand to a third party (a webhook provider, an OAuth callback, a teammate). Holding a
+name is free — pricing is unchanged (1 credit/hour only while connected). Works on `tunnel`
+and `webhook`, foreground and `--daemon`.
+
+If the name is already taken by another account the command fails with a "taken" error and
+**no credit is charged** — pick a different name or drop the flag for an auto name. Manage
+reserved names with:
+
+```bash
+npx otterkit subdomains                 # list reserved names
+npx otterkit subdomains reserve myapp   # reserve without starting a tunnel
+npx otterkit subdomains release myapp   # release a name
+```
+
 ### Webhook Endpoint (1 credit/hour, captures incoming HTTP requests)
 
 ```bash
