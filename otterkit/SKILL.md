@@ -5,28 +5,26 @@ description: Expose a local port to the internet via OtterKit tunnel, or create 
 
 # OtterKit Tunnel
 
-Expose a local port to the internet instantly via a secure tunnel. Payments are handled automatically via MPP (Machine Payments Protocol) using Tempo Wallet or mppx. The CLI auto-detects which wallet is available (Tempo Wallet first, mppx fallback) and prints the wallet address when connecting (e.g. "Using Tempo Wallet (0x1e69...)"). The server accepts both USDC and pathUSD on Tempo mainnet.
+Expose a local port to the internet instantly via a secure tunnel. Paid with prepaid **OtterKit credits** (1 credit = $0.01), metered by time: **1 credit per connected hour** (first hour charged at provision), **never more than 10 credits per tunnel per day**. Billing pauses while disconnected, and tunnels auto-stop after a TTL (default 24h) so a forgotten tunnel stops billing. The user logs in once with `otterkit login`; after that the CLI (and any agent on the same machine) provisions automatically, debiting the user's credit balance.
 
 ## Prerequisites
 
-The user must have a payment wallet set up. Either option works:
-
-**Option 1: Tempo Wallet (recommended)**
+The user must be logged in. One-time:
 
 ```bash
-curl -fsSL https://tempo.xyz/install | bash && tempo wallet login
+npx otterkit login
 ```
 
-Tempo Wallet uses USDC by default. Access keys are scoped to USDC.
+This opens the browser, the user approves the device, and a token is saved to `~/.otterkit/credentials.json`. Buy credits at https://app.otterkit.com. New accounts get a small free-credit grant to start.
 
-**Option 2: mppx**
+For headless/CI agents, set `OTTERKIT_TOKEN` (create a token at app.otterkit.com → API Tokens) instead of running `otterkit login`.
+
+Check the logged-in account and balance:
 
 ```bash
-npx mppx account create
-npx mppx account fund
+npx otterkit whoami
+npx otterkit balance
 ```
-
-If the server asks for USDC but the mppx wallet holds pathUSD, the CLI auto-swaps via Tempo DEX.
 
 ## When to Use
 
@@ -42,12 +40,10 @@ If the server asks for USDC but the mppx wallet holds pathUSD, the CLI auto-swap
 - User needs to debug webhook integrations (capture + forward)
 - User wants to capture HTTP traffic passing through a tunnel for later inspection
 - User needs to replay or inspect webhook payloads
-- User wants to share a local file via a download URL
-- User needs to generate a downloadable link for a file
 
 ## Commands
 
-### Foreground Tunnel ($0.01, alive while terminal is open)
+### Foreground Tunnel (1 credit/hour, alive while terminal is open)
 
 ```bash
 npx otterkit tunnel <port>
@@ -61,45 +57,36 @@ The tunnel stays alive as long as the terminal is open. Press Ctrl+C to disconne
 npx otterkit tunnel <port> --daemon [--ttl <duration>]
 ```
 
-Runs in the background as a detached process. Auto-expires when TTL runs out.
+Runs in the background as a detached process. Same hourly pricing; the TTL is an auto-stop (default 24h, max 7d), not a price.
 
-#### Daemon Pricing
+#### Pricing (all modes)
 
-| TTL              | Price | Flag        |
-| ---------------- | ----- | ----------- |
-| 1 minute         | $0.01 | `--ttl 1m`  |
-| 1 hour (default) | $0.01 | `--ttl 1h`  |
-| 4 hours          | $0.03 | `--ttl 4h`  |
-| 12 hours         | $0.05 | `--ttl 12h` |
-| 24 hours         | $0.08 | `--ttl 24h` |
+| What                 | Cost                                            |
+| -------------------- | ----------------------------------------------- |
+| Per connected hour   | 1 credit ($0.01), first hour at provision       |
+| Daily cap per tunnel | 10 credits — hours beyond are free              |
+| While disconnected   | Free — billing pauses                           |
+| Auto-stop TTL        | `--ttl 45m` / `4h` / `3d` (default 24h, max 7d) |
 
-### Webhook Endpoint ($0.01, captures incoming HTTP requests)
+### Webhook Endpoint (1 credit/hour, captures incoming HTTP requests)
 
 ```bash
 npx otterkit webhook
 ```
 
-Creates a webhook endpoint that captures incoming HTTP requests without needing a local server. Same pricing as tunnels. Supports daemon mode with `--daemon` and `--ttl` flags.
+Creates a webhook endpoint that captures incoming HTTP requests without needing a local server. Every request is saved to a local JSONL file (`~/.otterkit/requests/<subdomain>.jsonl`) for later inspection with `otterkit inspect`. Same pricing as tunnels. Supports daemon mode with `--daemon` and `--ttl` flags.
 
 ```bash
 npx otterkit webhook --daemon [--ttl <duration>]
 ```
 
-### Intercept (capture + forward, $0.01)
+### Capture Tunnel Traffic (`--log`)
 
 ```bash
-npx otterkit intercept <port>    # capture + forward to local port
-npx otterkit intercept           # capture only, no local server
+npx otterkit tunnel <port> --log
 ```
 
-Captures every HTTP request to a local JSONL file (`~/.otterkit/requests/<subdomain>.jsonl`) while optionally forwarding to your local server. Useful for debugging webhook integrations. Inspect or replay any captured request later.
-
-Supports daemon mode:
-
-```bash
-npx otterkit intercept <port> --daemon --ttl 4h
-npx otterkit intercept --daemon --ttl 1h
-```
+Forwards traffic like a normal tunnel while also capturing every request to the JSONL log. Useful for debugging webhook integrations against a real local server.
 
 ### Inspect Captured Requests
 
@@ -109,17 +96,14 @@ npx otterkit inspect <subdomain> --json  # raw JSONL output for piping
 npx otterkit inspect <subdomain> --last 50  # show last 50 requests
 ```
 
-### Share Files ($0.01, generates download URLs)
+### Account
 
 ```bash
-npx otterkit share <paths...>
-npx otterkit share ./report.pdf
-npx otterkit share ./file1.pdf ./file2.zip
-npx otterkit share ./dist/
-npx otterkit share ./dist/ --daemon --ttl 4h
+npx otterkit login    # browser device-flow login (one-time)
+npx otterkit whoami   # show account + balance
+npx otterkit balance  # show credit balance
+npx otterkit logout   # remove the saved token
 ```
-
-Creates public download URLs for local files or directories. Supports single files, multiple files, and entire directories. Multiple files get an index page listing all downloads. Supports daemon mode for background sharing.
 
 ### Check Running Daemons
 
@@ -139,13 +123,11 @@ Stops a running daemon tunnel by its subdomain (e.g., `agent-a1b2c3d4`).
 
 ## Options
 
-| Flag               | Description                                             | Default         |
-| ------------------ | ------------------------------------------------------- | --------------- |
-| `--host <host>`    | Local host to forward to                                | `127.0.0.1`     |
-| `--account <name>` | mppx account name to use for payment                    | default account |
-| `--wallet <name>`  | Force wallet: `tempo` or `mppx` (overrides auto-detect) | auto-detect     |
-| `--daemon`         | Run tunnel in background                                | off             |
-| `--ttl <duration>` | Daemon TTL: 1m, 1h, 4h, 12h, 24h                        | `1h`            |
+| Flag               | Description                                    | Default     |
+| ------------------ | ---------------------------------------------- | ----------- |
+| `--host <host>`    | Local host to forward to                       | `127.0.0.1` |
+| `--daemon`         | Run tunnel in background                       | off         |
+| `--ttl <duration>` | Auto-stop after duration, e.g. 4h, 3d (max 7d) | `24h`       |
 
 ## Examples
 
@@ -156,50 +138,29 @@ npx otterkit tunnel 3000
 # Expose port 8080 on a custom host
 npx otterkit tunnel 8080 --host 0.0.0.0
 
-# Use a specific mppx account
-npx otterkit tunnel 3000 --account work
-
 # Background tunnel for 4 hours
 npx otterkit tunnel 3000 --daemon --ttl 4h
 
-# Quick 1-minute background tunnel
+# Short-lived background tunnel (auto-stops after 1 minute)
 npx otterkit tunnel 4008 --daemon --ttl 1m
 
-# Create a webhook endpoint (foreground, $0.01)
+# Create a webhook endpoint (foreground)
 npx otterkit webhook
 
-# Create a background webhook for 4 hours ($0.03)
+# Create a background webhook, auto-stops after 4 hours
 npx otterkit webhook --daemon --ttl 4h
 
-# Webhook with a specific mppx account
-npx otterkit webhook --account work
+# Tunnel with request capture (view later with `inspect`)
+npx otterkit tunnel 3000 --log
 
-# Intercept: capture + forward to local server ($0.01)
-npx otterkit intercept 3000
-
-# Intercept: capture only, no local server ($0.01)
-npx otterkit intercept
-
-# Intercept daemon for 4 hours
-npx otterkit intercept 3000 --daemon --ttl 4h
+# Background capture tunnel for 4 hours
+npx otterkit tunnel 3000 --log --daemon --ttl 4h
 
 # View captured requests
 npx otterkit inspect agent-a1b2c3d4
 
 # View as raw JSONL (pipe-friendly)
 npx otterkit inspect agent-a1b2c3d4 --json
-
-# Share a single file ($0.01)
-npx otterkit share ./report.pdf
-
-# Share multiple files (one URL with index page)
-npx otterkit share ./file1.pdf ./file2.zip
-
-# Share an entire directory
-npx otterkit share ./dist/
-
-# Share in background for 4 hours
-npx otterkit share ./dist/ --daemon --ttl 4h
 
 # Check running daemons
 npx otterkit status
@@ -210,34 +171,22 @@ npx otterkit stop agent-a1b2c3d4
 
 ## How It Works
 
-1. The CLI pays for the tunnel via MPP using your Tempo Wallet or mppx keychain (no private key export)
-2. A public URL like `https://agent-a1b2c3d4.otterkit.app` is created
-3. All HTTP traffic to that URL is forwarded to your local port
-4. Foreground tunnels auto-reconnect on network interruption or laptop wake
-5. Daemon tunnels run as detached processes and auto-expire after TTL
+1. `otterkit login` runs a browser device-flow and saves an API token to `~/.otterkit/credentials.json`.
+2. The CLI sends that token when provisioning; the server debits the user's credit balance.
+3. A public URL like `https://agent-a1b2c3d4.otterkit.app` is created.
+4. All HTTP traffic to that URL is forwarded to your local port.
+5. Foreground tunnels auto-reconnect on network interruption or laptop wake.
+6. Daemon tunnels run as detached processes and auto-expire after TTL.
 
 ## Troubleshooting
 
-If the command fails with "No wallet found", set up one of the supported wallets:
-
-**Option 1: Tempo Wallet (recommended)**
+If the command fails with "Not logged in", log in (one-time):
 
 ```bash
-curl -fsSL https://tempo.xyz/install | bash && tempo wallet login
+npx otterkit login
 ```
 
-**Option 2: mppx**
-
-```bash
-npx mppx account create
-npx mppx account fund
-```
-
-If the user has multiple accounts and wants to list them:
-
-```bash
-npx mppx account list
-```
+If it fails with "Out of credits" / "insufficient_credits", top up at https://app.otterkit.com/billing.
 
 To check pricing:
 
