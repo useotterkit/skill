@@ -1,6 +1,6 @@
 ---
 name: otterkit-tunnel
-description: Expose a local port to the internet via OtterKit tunnel, or create a webhook endpoint to capture incoming HTTP requests. Use when the user asks to "tunnel", "expose", "share my localhost", "make my local server public", needs a public URL for a local service, or needs a webhook endpoint to capture requests.
+description: Expose a local port to the internet via OtterKit tunnel, or create a webhook endpoint to capture incoming HTTP requests. Captured requests can be inspected and replayed against the local server, and tunnels can be protected with HTTP Basic auth. Use when the user asks to "tunnel", "expose", "share my localhost", "make my local server public", needs a public URL for a local service, needs a webhook endpoint to capture requests, or wants to re-test a webhook handler against a previously received payload.
 ---
 
 # OtterKit Tunnel
@@ -40,6 +40,8 @@ npx otterkit balance
 - User needs to debug webhook integrations (capture + forward)
 - User wants to capture HTTP traffic passing through a tunnel for later inspection
 - User needs to replay or inspect webhook payloads
+- User fixed a webhook handler and wants to re-test it against a real captured payload
+- User wants the public tunnel URL protected so only callers with credentials reach their server
 
 ## Commands
 
@@ -93,6 +95,24 @@ npx otterkit subdomains reserve myapp   # reserve without starting a tunnel
 npx otterkit subdomains release myapp   # release a name
 ```
 
+### Protect a Tunnel with Basic Auth (`--auth`)
+
+```bash
+npx otterkit tunnel 3000 --auth admin:s3cret
+```
+
+Requires HTTP Basic auth on every request to the public URL. Enforced by the CLI on the
+local machine **before** anything reaches the local server — requests without valid
+credentials get a `401` and are never forwarded. Credentials are never sent to or stored by
+OtterKit's servers, and auth checks are free. Callers authenticate the standard way:
+
+```bash
+curl -u admin:s3cret https://agent-a1b2c3d4.otterkit.app/
+```
+
+Tunnel command only (foreground and `--daemon`); webhook endpoints are capture-only and
+stay open. Use this when exposing anything sensitive (admin UIs, internal APIs, demos).
+
 ### Webhook Endpoint (1 credit/hour, captures incoming HTTP requests)
 
 ```bash
@@ -119,6 +139,29 @@ Forwards traffic like a normal tunnel while also capturing every request to the 
 npx otterkit inspect <subdomain>         # view captured requests (last 20)
 npx otterkit inspect <subdomain> --json  # raw JSONL output for piping
 npx otterkit inspect <subdomain> --last 50  # show last 50 requests
+```
+
+### Replay a Captured Request
+
+```bash
+npx otterkit replay <subdomain>                          # re-send the latest captured request
+npx otterkit replay <subdomain> --index 3                # re-send request #3 (1 = oldest, -1 = latest)
+npx otterkit replay <subdomain> --target 127.0.0.1:3000  # explicit target (webhook captures / stopped tunnels)
+npx otterkit replay <subdomain> --json                   # machine-readable: {status, headers, body (base64), durationMs}
+```
+
+Re-sends a captured request straight to the local server — no tunnel round-trip, **no
+credits spent**. Ideal loop for debugging a webhook handler: capture the real payload once,
+fix the code, `replay` until it returns 200. The target defaults to the running daemon's
+`host:port` for that subdomain; pass `--target` otherwise. The replayed exchange is appended
+to the capture log, so `inspect` shows it. Exit code 0 whenever the local server responded
+(even 4xx/5xx), 1 if it was unreachable.
+
+The request can be modified before re-sending:
+
+```bash
+npx otterkit replay <subdomain> --method PUT --path /v2/hook \
+  -H "X-Debug: 1" --body '{"event":"payment.failed"}'
 ```
 
 ### Account
@@ -148,11 +191,14 @@ Stops a running daemon tunnel by its subdomain (e.g., `agent-a1b2c3d4`).
 
 ## Options
 
-| Flag               | Description                                    | Default     |
-| ------------------ | ---------------------------------------------- | ----------- |
-| `--host <host>`    | Local host to forward to                       | `127.0.0.1` |
-| `--daemon`         | Run tunnel in background                       | off         |
-| `--ttl <duration>` | Auto-stop after duration, e.g. 4h, 3d (max 7d) | `24h`       |
+| Flag                 | Description                                             | Default     |
+| -------------------- | ------------------------------------------------------- | ----------- |
+| `--host <host>`      | Local host to forward to                                | `127.0.0.1` |
+| `--log`              | Capture requests to a JSONL log (tunnel only)           | off         |
+| `--daemon`           | Run tunnel in background                                | off         |
+| `--ttl <duration>`   | Auto-stop after duration, e.g. 4h, 3d (max 7d)          | `24h`       |
+| `--subdomain <name>` | Use a stable reserved URL (claimed on first use)        | auto        |
+| `--auth <user:pass>` | Require HTTP Basic auth (tunnel only, enforced locally) | off         |
 
 ## Examples
 
@@ -186,6 +232,15 @@ npx otterkit inspect agent-a1b2c3d4
 
 # View as raw JSONL (pipe-friendly)
 npx otterkit inspect agent-a1b2c3d4 --json
+
+# Re-send the latest captured request to the local server
+npx otterkit replay agent-a1b2c3d4
+
+# Re-send with a modified body, machine-readable result
+npx otterkit replay agent-a1b2c3d4 --body '{"event":"retry"}' --json
+
+# Tunnel protected with Basic auth
+npx otterkit tunnel 3000 --auth admin:s3cret
 
 # Check running daemons
 npx otterkit status
