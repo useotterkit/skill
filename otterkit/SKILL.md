@@ -113,10 +113,56 @@ curl -u admin:s3cret https://agent-a1b2c3d4.otterkit.app/
 Tunnel command only (foreground and `--daemon`); webhook endpoints are capture-only and
 stay open. Use this when exposing anything sensitive (admin UIs, internal APIs, demos).
 
+### Project Config (`otterkit up` / `down`)
+
+If the project has an `otterkit.toml`, bring every defined tunnel up with one command.
+`up` is **idempotent** — already-running profiles are skipped (`already_running`), so it is
+safe to run repeatedly. Each profile is a normal daemon (`status`/`inspect`/`replay`/`stop`
+work on them; normal pricing per profile).
+
+```toml
+[tunnels.web]
+port = 3000
+subdomain = "myapp"        # optional stable URL
+auth = "admin:s3cret"      # optional HTTP Basic auth
+log = true                 # optional request capture
+ttl = "8h"                 # optional auto-stop (default 24h)
+
+[tunnels.hooks]
+webhook = true             # capture-only endpoint
+respond = 200              # optional custom auto-response
+respond_body = '{"ok":true}'
+```
+
+```bash
+npx otterkit up --json     # start everything, machine-readable results
+npx otterkit down          # stop the daemons started from the config
+```
+
+### JSON Output (use this when scripting)
+
+Prefer `--json` for reliable parsing — it works on `tunnel --daemon`, `webhook --daemon`,
+`up`, `down`, `status`, `inspect`, `replay`, `subdomains list`, `whoami`, and `balance`.
+Provision results include `{subdomain, publicUrl, target, pid, ttl, expiresAt, logPath}`.
+Errors are JSON too (e.g. `{"error":"insufficient_credits","topUpUrl":"..."}`) with exit
+code 1.
+
+```bash
+URL=$(npx otterkit tunnel 3000 --daemon --json | jq -r .publicUrl)
+```
+
 ### Webhook Endpoint (1 credit/hour, captures incoming HTTP requests)
 
 ```bash
 npx otterkit webhook
+```
+
+Default auto-response is `200 {"received":true}`. If the provider requires a specific
+status/body before delivering events (challenge echo, strict 2xx), customize it:
+
+```bash
+npx otterkit webhook --respond 204
+npx otterkit webhook --respond 200 --respond-body '{"challenge":"accepted"}'
 ```
 
 Creates a webhook endpoint that captures incoming HTTP requests without needing a local server. Every request is saved to a local JSONL file (`~/.otterkit/requests/<subdomain>.jsonl`) for later inspection with `otterkit inspect`. Same pricing as tunnels. Supports daemon mode with `--daemon` and `--ttl` flags.
@@ -139,7 +185,13 @@ Forwards traffic like a normal tunnel while also capturing every request to the 
 npx otterkit inspect <subdomain>         # view captured requests (last 20)
 npx otterkit inspect <subdomain> --json  # raw JSONL output for piping
 npx otterkit inspect <subdomain> --last 50  # show last 50 requests
+npx otterkit inspect <subdomain> --follow   # live-tail new requests (Ctrl+C to stop)
+npx otterkit inspect <subdomain> --method POST --status 5xx --path /hook  # filters (combinable)
+npx otterkit inspect <subdomain> --har > session.har  # HAR 1.2 export for devtools/HAR viewers
 ```
+
+`--status` accepts an exact code (`500`) or a class (`5xx`). Filters also apply to
+`--json`, `--follow`, and `--har`.
 
 ### Replay a Captured Request
 
@@ -191,14 +243,17 @@ Stops a running daemon tunnel by its subdomain (e.g., `agent-a1b2c3d4`).
 
 ## Options
 
-| Flag                 | Description                                             | Default     |
-| -------------------- | ------------------------------------------------------- | ----------- |
-| `--host <host>`      | Local host to forward to                                | `127.0.0.1` |
-| `--log`              | Capture requests to a JSONL log (tunnel only)           | off         |
-| `--daemon`           | Run tunnel in background                                | off         |
-| `--ttl <duration>`   | Auto-stop after duration, e.g. 4h, 3d (max 7d)          | `24h`       |
-| `--subdomain <name>` | Use a stable reserved URL (claimed on first use)        | auto        |
-| `--auth <user:pass>` | Require HTTP Basic auth (tunnel only, enforced locally) | off         |
+| Flag                 | Description                                             | Default             |
+| -------------------- | ------------------------------------------------------- | ------------------- |
+| `--host <host>`      | Local host to forward to                                | `127.0.0.1`         |
+| `--log`              | Capture requests to a JSONL log (tunnel only)           | off                 |
+| `--daemon`           | Run tunnel in background                                | off                 |
+| `--ttl <duration>`   | Auto-stop after duration, e.g. 4h, 3d (max 7d)          | `24h`               |
+| `--subdomain <name>` | Use a stable reserved URL (claimed on first use)        | auto                |
+| `--auth <user:pass>` | Require HTTP Basic auth (tunnel only, enforced locally) | off                 |
+| `--respond <status>` | Webhook auto-response status (webhook only)             | `200`               |
+| `--respond-body <d>` | Webhook auto-response body (webhook only)               | `{"received":true}` |
+| `--json`             | Machine-readable output (daemon/read commands)          | off                 |
 
 ## Examples
 
