@@ -171,6 +171,12 @@ Creates a webhook endpoint that captures incoming HTTP requests without needing 
 npx otterkit webhook --daemon [--ttl <duration>]
 ```
 
+With `--standby`, the endpoint stays live even while the CLI is disconnected (laptop closed, daemon killed): the server answers each request with the configured auto-response and buffers up to 200 captures (64 KB bodies), replaying them into the local log on the next connect. Providers never see downtime. Billing continues while disconnected (still capped at 10 credits/day; the session still auto-stops at its `--ttl`).
+
+```bash
+npx otterkit webhook --standby [--respond <status>] [--respond-body <data>]
+```
+
 ### Capture Tunnel Traffic (`--log`)
 
 ```bash
@@ -253,6 +259,7 @@ Stops a running daemon tunnel by its subdomain (e.g., `agent-a1b2c3d4`).
 | `--auth <user:pass>` | Require HTTP Basic auth (tunnel only, enforced locally) | off                 |
 | `--respond <status>` | Webhook auto-response status (webhook only)             | `200`               |
 | `--respond-body <d>` | Webhook auto-response body (webhook only)               | `{"received":true}` |
+| `--standby`          | Server answers + buffers while disconnected (webhook)   | off                 |
 | `--json`             | Machine-readable output (daemon/read commands)          | off                 |
 
 ## Examples
