@@ -66,8 +66,8 @@ Runs in the background as a detached process. Same hourly pricing; the TTL is an
 | What                 | Cost                                            |
 | -------------------- | ----------------------------------------------- |
 | Per connected hour   | 1 credit ($0.01), first hour at provision       |
-| Daily cap per tunnel | 10 credits — hours beyond are free              |
-| While disconnected   | Free — billing pauses                           |
+| Daily cap per tunnel | 10 credits - hours beyond are free              |
+| While disconnected   | Free - billing pauses                           |
 | Auto-stop TTL        | `--ttl 45m` / `4h` / `3d` (default 24h, max 7d) |
 
 ### Stable URL (`--subdomain`)
@@ -82,11 +82,11 @@ npx otterkit tunnel 3000 --subdomain myapp   # https://myapp.otterkit.app, every
 The name is claimed to the user's account the first time it's used and reused after that, so
 the same public URL works across restarts and machines. Use this when the user needs a fixed
 URL to hand to a third party (a webhook provider, an OAuth callback, a teammate). Holding a
-name is free — pricing is unchanged (1 credit/hour only while connected). Works on `tunnel`
+name is free - pricing is unchanged (1 credit/hour only while connected). Works on `tunnel`
 and `webhook`, foreground and `--daemon`.
 
 If the name is already taken by another account the command fails with a "taken" error and
-**no credit is charged** — pick a different name or drop the flag for an auto name. Manage
+**no credit is charged** - pick a different name or drop the flag for an auto name. Manage
 reserved names with:
 
 ```bash
@@ -102,7 +102,7 @@ npx otterkit tunnel 3000 --auth admin:s3cret
 ```
 
 Requires HTTP Basic auth on every request to the public URL. Enforced by the CLI on the
-local machine **before** anything reaches the local server — requests without valid
+local machine **before** anything reaches the local server - requests without valid
 credentials get a `401` and are never forwarded. Credentials are never sent to or stored by
 OtterKit's servers, and auth checks are free. Callers authenticate the standard way:
 
@@ -116,7 +116,7 @@ stay open. Use this when exposing anything sensitive (admin UIs, internal APIs, 
 ### Project Config (`otterkit up` / `down`)
 
 If the project has an `otterkit.toml`, bring every defined tunnel up with one command.
-`up` is **idempotent** — already-running profiles are skipped (`already_running`), so it is
+`up` is **idempotent** - already-running profiles are skipped (`already_running`), so it is
 safe to run repeatedly. Each profile is a normal daemon (`status`/`inspect`/`replay`/`stop`
 work on them; normal pricing per profile).
 
@@ -141,7 +141,7 @@ npx otterkit down          # stop the daemons started from the config
 
 ### JSON Output (use this when scripting)
 
-Prefer `--json` for reliable parsing — it works on `tunnel --daemon`, `webhook --daemon`,
+Prefer `--json` for reliable parsing - it works on `tunnel --daemon`, `webhook --daemon`,
 `up`, `down`, `status`, `inspect`, `replay`, `subdomains list`, `whoami`, and `balance`.
 Provision results include `{subdomain, publicUrl, target, pid, ttl, expiresAt, logPath}`.
 Errors are JSON too (e.g. `{"error":"insufficient_credits","topUpUrl":"..."}`) with exit
@@ -208,7 +208,7 @@ npx otterkit replay <subdomain> --target 127.0.0.1:3000  # explicit target (webh
 npx otterkit replay <subdomain> --json                   # machine-readable: {status, headers, body (base64), durationMs}
 ```
 
-Re-sends a captured request straight to the local server — no tunnel round-trip, **no
+Re-sends a captured request straight to the local server - no tunnel round-trip, **no
 credits spent**. Ideal loop for debugging a webhook handler: capture the real payload once,
 fix the code, `replay` until it returns 200. The target defaults to the running daemon's
 `host:port` for that subdomain; pass `--target` otherwise. The replayed exchange is appended
