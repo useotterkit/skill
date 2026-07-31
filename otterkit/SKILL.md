@@ -15,9 +15,9 @@ The user must be logged in. One-time:
 npx otterkit login
 ```
 
-This opens the browser, the user approves the device, and a token is saved to `~/.otterkit/credentials.json`. Buy credits at https://app.otterkit.com. New accounts get a small free-credit grant to start.
+This opens the browser, the user approves the device, and a token is saved to `~/.otterkit/credentials.json`. Buy credits at https://console.otterkit.com. New accounts get a small free-credit grant to start.
 
-For headless/CI agents, set `OTTERKIT_TOKEN` (create a token at app.otterkit.com → API Tokens) instead of running `otterkit login`.
+For headless/CI agents, set `OTTERKIT_TOKEN` (create a token at console.otterkit.com → API Tokens) instead of running `otterkit login`.
 
 Check the logged-in account and balance:
 
@@ -328,7 +328,7 @@ If the command fails with "Not logged in", log in (one-time):
 npx otterkit login
 ```
 
-If it fails with "Out of credits" / "insufficient_credits", top up at https://app.otterkit.com/billing.
+If it fails with "Out of credits" / "insufficient_credits", top up at https://console.otterkit.com/billing.
 
 To check pricing:
 
