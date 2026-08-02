@@ -5,7 +5,7 @@ description: Expose a local port to the internet via OtterKit tunnel, or create 
 
 # OtterKit Tunnel
 
-Expose a local port to the internet instantly via a secure tunnel. Paid with prepaid **OtterKit credits** (1 credit = $0.01), metered by time: **1 credit per connected hour** (first hour charged at provision), **never more than 10 credits per tunnel per day**. Billing pauses while disconnected, and tunnels auto-stop after a TTL (default 24h) so a forgotten tunnel stops billing. The user logs in once with `otterkit login`; after that the CLI (and any agent on the same machine) provisions automatically, debiting the user's credit balance.
+Expose a local port to the internet instantly via a secure tunnel. Paid with prepaid **OtterKit credits** (1 credit = $0.01), metered by time: **1 credit per connected hour** (first hour charged at provision), **never more than 300 credits ($3) per endpoint per rolling 30 days** - webhooks and tunnels alike. Billing pauses while disconnected, and tunnels auto-stop after a TTL (default 24h) so a forgotten tunnel stops billing. The user logs in once with `otterkit login`; after that the CLI (and any agent on the same machine) provisions automatically, debiting the user's credit balance.
 
 ## Prerequisites
 
