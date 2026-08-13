@@ -1,13 +1,12 @@
 ---
 name: otterkit-github-webhooks
-description: Develop and debug GitHub webhooks and GitHub Apps locally with OtterKit - a reliable smee.io alternative. Capture push/pull_request/issues deliveries at a persistent endpoint, verify X-Hub-Signature-256 secrets, replay deliveries against a local handler, and send synthetic signed GitHub events. Use when the user is building a GitHub App, GitHub Action alternative, bot, or CI integration that receives GitHub webhooks, mentions smee.io or webhook proxy, or needs to test GitHub webhook signature verification locally.
+description: Develop and debug GitHub webhooks and GitHub Apps locally with OtterKit. Capture push/pull_request/issues deliveries at a persistent endpoint, verify X-Hub-Signature-256 secrets, replay deliveries against a local handler, and send synthetic signed GitHub events. Use when the user is building a GitHub App, bot, or CI integration that receives GitHub webhooks, needs a webhook proxy for local development, or needs to test GitHub webhook signature verification locally.
 ---
 
 # GitHub Webhooks with OtterKit
 
-Local development for GitHub Apps and repo webhooks: persistent capture endpoint
-(no smee.io channels that expire or drop large payloads), signature verification,
-replay, and synthetic signed events.
+Local development for GitHub Apps and repo webhooks: persistent capture endpoint,
+signature verification, replay, and synthetic signed events.
 
 Prerequisites: logged in via `npx otterkit login` (see the `otterkit-tunnel` skill for
 accounts, credits, and pricing).
@@ -32,7 +31,7 @@ npx otterkit webhook --subdomain myapp-github --daemon
 
 Use that URL as the webhook URL in the repo/org settings or the GitHub App
 manifest, with a webhook secret set. The endpoint answers `200` instantly and
-captures every delivery - including the large payloads smee.io is known to drop.
+captures every delivery, large payloads included.
 `--standby` keeps capturing while your laptop is closed.
 
 ```bash

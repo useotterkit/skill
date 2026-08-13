@@ -9,7 +9,7 @@ capture, signature verification, and replay.
 |---|---|
 | [`otterkit`](otterkit/SKILL.md) | Core: tunnels, webhook endpoints, capture, inspect, replay, daemons, pricing |
 | [`stripe-webhooks`](stripe-webhooks/SKILL.md) | Stripe: signed synthetic events, `Stripe-Signature` verification, re-signed replay |
-| [`github-webhooks`](github-webhooks/SKILL.md) | GitHub Apps: smee.io-free capture, `X-Hub-Signature-256` verification, replay |
+| [`github-webhooks`](github-webhooks/SKILL.md) | GitHub Apps: persistent capture endpoint, `X-Hub-Signature-256` verification, replay |
 | [`shopify-webhooks`](shopify-webhooks/SKILL.md) | Shopify: stable `--tunnel-url` for the CLI, HMAC verification, standby endpoints |
 | [`slack-webhooks`](slack-webhooks/SKILL.md) | Slack: Events API via capture tunnel, signing-secret verification, re-signed replay |
 
