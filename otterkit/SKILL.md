@@ -171,10 +171,10 @@ Creates a webhook endpoint that captures incoming HTTP requests without needing 
 npx otterkit webhook --daemon [--ttl <duration>]
 ```
 
-With `--standby`, the endpoint stays live even while the CLI is disconnected (laptop closed, daemon killed): the server answers each request with the configured auto-response and buffers up to 200 captures (64 KB bodies), replaying them into the local log on the next connect. Providers never see downtime. Billing continues while disconnected (still capped at 10 credits/day; the session still auto-stops at its `--ttl`).
+Endpoints are server-answered by default, so one stays live even while the CLI is disconnected (laptop closed, daemon killed): the server answers each request with the configured auto-response and buffers up to 200 captures (64 KB bodies), replaying them into the local log on the next connect. Providers never see downtime. Billing continues while disconnected (still capped at 300 credits per rolling 30 days; the session still auto-stops at its `--ttl`).
 
 ```bash
-npx otterkit webhook --standby [--respond <status>] [--respond-body <data>]
+npx otterkit webhook [--respond <status>] [--respond-body <data>]
 ```
 
 ### Capture Tunnel Traffic (`--log`)
@@ -222,6 +222,25 @@ npx otterkit replay <subdomain> --method PUT --path /v2/hook \
   -H "X-Debug: 1" --body '{"event":"payment.failed"}'
 ```
 
+### Publish a Local MCP Server (1 credit/hour)
+
+Use when the user wants to reach an MCP server on their machine from Claude on the web, Cursor, VS Code, or another person's machine. The server keeps running locally.
+
+```bash
+npx otterkit mcp publish ./server.js                    # script: .js, .ts or .py
+npx otterkit mcp publish npx -y some-mcp-server         # any stdio command
+npx otterkit mcp publish http://localhost:3000/mcp      # a local HTTP MCP server
+```
+
+It prints one link: `https://<subdomain>.otterkit.app/mcp/<key>`. The link is the key: there is no sign-in, and anyone who has it can call the published tools. Tell the user to treat it like a password. Opened in a browser, the same link shows a share page with setup steps for Claude, ChatGPT, Cursor, VS Code and Claude Code.
+
+- Runs in the foreground only (no `--daemon`, no `--json`). Start it as a background process and read the `Server` line from its output.
+- Tools the server marks `destructiveHint: true` are not published unless `--all-tools`. `--only a,b` and `--exclude a,b` pick tools by name.
+- `--subdomain <name>` keeps the same link across restarts; `--rotate` replaces it. In a terminal, `r` issues a new link and `q` stops.
+- Flags go before the target. Everything after the target is passed to the server.
+- A tool call must finish within 28 seconds. Progress and sampling are not relayed.
+- Requires `otterkit` 0.49.0 or later.
+
 ### Account
 
 ```bash
@@ -259,7 +278,6 @@ Stops a running daemon tunnel by its subdomain (e.g., `agent-a1b2c3d4`).
 | `--auth <user:pass>` | Require HTTP Basic auth (tunnel only, enforced locally) | off                 |
 | `--respond <status>` | Webhook auto-response status (webhook only)             | `200`               |
 | `--respond-body <d>` | Webhook auto-response body (webhook only)               | `{"received":true}` |
-| `--standby`          | Server answers + buffers while disconnected (webhook)   | off                 |
 | `--json`             | Machine-readable output (daemon/read commands)          | off                 |
 
 ## Examples
