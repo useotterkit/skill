@@ -234,11 +234,12 @@ npx otterkit mcp publish http://localhost:3000/mcp      # a local HTTP MCP serve
 
 It prints one link: `https://<subdomain>.otterkit.app/mcp/<key>`. The link is the key: there is no sign-in, and anyone who has it can call the published tools. Tell the user to treat it like a password. Opened in a browser, the same link shows a share page with setup steps for Claude, ChatGPT, Cursor, VS Code and Claude Code.
 
-- Runs in the foreground only (no `--daemon`, no `--json`). Start it as a background process and read the `Server` line from its output.
+- Agents should use `--daemon --json`: it starts the server in the background, returns once the link is live, and prints one JSON line with `url`, `tools`, `held`, `pid` and `logPath`. Stop it with `npx otterkit stop <subdomain>`. Needs `otterkit` 0.50.0 or later; without `--daemon` the command stays in the foreground.
 - Tools the server marks `destructiveHint: true` are not published unless `--all-tools`. `--only a,b` and `--exclude a,b` pick tools by name.
 - `--subdomain <name>` keeps the same link across restarts; `--rotate` replaces it. In a terminal, `r` issues a new link and `q` stops.
 - Flags go before the target. Everything after the target is passed to the server.
 - A tool call must finish within 28 seconds. Progress and sampling are not relayed.
+- Tool calls are recorded locally (never uploaded; `--no-record` disables it). `npx otterkit mcp calls [subdomain] --json` lists them, `--show <id>` prints one call's arguments and result, and `npx otterkit mcp replay [subdomain] [id] --json` runs it again on a fresh copy of the server and reports `same: true|false`. Use replay to check a fix to a tool without asking the user to re-prompt their client. Needs `otterkit` 0.50.0 or later.
 - Requires `otterkit` 0.49.0 or later.
 
 ### Account
