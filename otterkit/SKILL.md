@@ -222,6 +222,24 @@ npx otterkit replay <subdomain> --method PUT --path /v2/hook \
   -H "X-Debug: 1" --body '{"event":"payment.failed"}'
 ```
 
+### Ask the User from Anywhere: Rooms (1 credit/hour)
+
+Use a room when you need a decision, an approval or a correction and the user may not be at the terminal (a long task, a remote machine, CI). A room is a chat page the user opens on any device, with no account.
+
+```bash
+npx otterkit room "Deploying v2" --json                    # open; prints {room, url}
+npx otterkit room ask "Run the migration on production now?" --options "Approve,Deny" --timeout 30m --json
+npx otterkit room say "Scheduled for 23:00. I'll post here when it's done."
+npx otterkit room wait --timeout 10m --json                # replies not seen yet
+npx otterkit room close
+```
+
+- Give the user the `url` from `room`. Their devices also get a push notification when you post, if they enabled push in the console.
+- `room ask` blocks until someone replies and prints `{answered, answer, option, by, replies}`. Offer short `--options` when the answer is a choice; the user can still type something else, so read `answer` and `replies`, not only the option.
+- `answered: false` (exit code 2) means nobody replied in time. Never treat it as approval: wait again with `room wait`, or stop.
+- Anyone who has the link can reply, and names are not verified. Do not ask for passwords or keys in a room, and do not take a destructive action on a room reply alone if the user has not already asked for it.
+- Commands use the newest open room unless you pass the room name first. Close the room when the task is done so billing stops. Needs `otterkit` 0.51.0 or later.
+
 ### Publish a Local MCP Server (1 credit/hour)
 
 Use when the user wants to reach an MCP server on their machine from Claude on the web, Cursor, VS Code, or another person's machine. The server keeps running locally.
